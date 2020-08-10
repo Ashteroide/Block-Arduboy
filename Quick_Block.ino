@@ -10,12 +10,10 @@
 Arduboy2 arduboy;
 
 // Player
-int playerX;
-int playerY;
+int playerX, playerY;
 
 // Dot for points
-int pointX;
-int pointY;
+int pointX, pointY;
 
 // Score and Time
 int score;
@@ -35,7 +33,7 @@ enum class GameState
 
 GameState gameState = GameState::Menu;
 
-
+// Reset
 void reset()
 {
     randomisePointX();
@@ -52,6 +50,18 @@ void reset()
     FlexiTimer2::start();
 }
 
+// Timer
+void Timer()
+{
+    if(millisecond >= 100)
+    {
+        second += 1;
+        millisecond = 0;
+    }
+    if(second >= 60) gameState = GameState::End;
+}
+
+// Timer Integer
 void timerInt()
 {
     millisecond += 1;
@@ -59,6 +69,7 @@ void timerInt()
 
 void setup()
 {
+
     reset();
     arduboy.begin();
     arduboy.clear();
@@ -66,6 +77,8 @@ void setup()
 
 void loop()
 {
+    arduboy.initRandomSeed();
+
     Timer();
     if(!arduboy.nextFrame()) return;
 
@@ -127,9 +140,9 @@ void updateGame()
 
     // Point Position
 
-    if(playerX == pointX || playerX == pointX + (1 || 2 || 3) || playerX == pointX - (1 || 2 || 3))
+    if(pointXNearPlayerX())
     {
-        if(playerY == pointY || playerY == pointY + (1 || 2 || 3) || playerY == pointY - (1 || 2 || 3))
+        if(pointYNearPlayerY())
         {
             randomisePointX();
             randomisePointY();
@@ -139,6 +152,16 @@ void updateGame()
     }
 
     if(score >= 10) gameState = GameState::End;
+}
+
+bool pointXNearPlayerX()
+{
+    return(playerX == pointX || (playerX == pointX + 2 || playerX == pointX - 2) || (playerX == pointX + 1 || playerX == pointX - 1));
+}
+
+bool pointYNearPlayerY()
+{
+    return(playerY == pointY || (playerY == pointY + 2 || playerY == pointY - 2) || (playerY == pointY + 1 || playerY == pointY - 1));
 }
 
 void drawGame()
@@ -195,15 +218,4 @@ void drawEnd()
         arduboy.setCursor(40, 29);
         arduboy.print(F("You Lose"));
     }
-}
-
-// Timer
-void Timer()
-{
-    if(millisecond >= 100)
-    {
-        second += 1;
-        millisecond = 0;
-    }
-    if(second >= 60) gameState = GameState::End;
 }
