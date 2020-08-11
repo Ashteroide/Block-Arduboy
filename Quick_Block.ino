@@ -36,7 +36,7 @@ enum class GameState
 {
     Menu,
     Game,
-    End
+    gameOver,
 };
 
 GameState gameState = GameState::Menu;
@@ -66,7 +66,6 @@ void Timer()
         second += 1;
         millisecond = 0;
     }
-    if(second >= maxTime[maxTimeSelect]) gameState = GameState::End;
 }
 
 // Timer Integer
@@ -77,8 +76,6 @@ void timerInt()
 
 void setup()
 {
-    Serial.begin(9600);
-
     maxScoreSelect = 0;
     maxTimeSelect = 0;
     menuCursor = 33;
@@ -110,9 +107,9 @@ void loop()
             drawGame();
             break;
 
-        case GameState::End:
-            updateEnd();
-            drawEnd();
+        case GameState::gameOver:
+            updateGameOver();
+            drawGameOver();
             break;
     }
 
@@ -172,8 +169,8 @@ void updateGame()
     if(arduboy.pressed(UP_BUTTON) && playerY > 23) playerY -= 1;
     if(arduboy.pressed(DOWN_BUTTON) && playerY < screenHeight - 2) playerY += 1;
 
-    if(playerX >= screenWidth) playerX -= 1;
-    if(playerX <= 1) playerX += 1;
+    if(playerX >= screenWidth - 2) playerX -= 1;
+    if(playerX <= 2) playerX += 1;
 
     // Point Position
 
@@ -188,8 +185,9 @@ void updateGame()
         }
     }
 
-    if(second > maxTime[maxTimeSelect]) gameState = GameState::End;
-    if(score >= maxScore[maxScoreSelect]) gameState = GameState::End;
+    if(score >= maxScore[maxScoreSelect]) gameState = GameState::gameOver;
+
+    if(second >= maxTime[maxTimeSelect]) gameState = GameState::gameOver;
 }
 
 bool pointXNearPlayerX()
@@ -234,25 +232,27 @@ int randomisePointY()
 }
 
 // Game over
-void updateEnd()
+void updateGameOver()
 {
-    FlexiTimer2::stop();
     if(arduboy.justPressed(A_BUTTON)) gameState = GameState::Menu;
+    FlexiTimer2::stop();
 }
 
-void drawEnd()
+void drawGameOver()
 {
     if(second <= maxTime[maxTimeSelect] - 1)
     {
         arduboy.setCursor(40, 22);
         arduboy.print(F("You Win!"));
 
-        arduboy.setCursor(34, 32);
+        if(second < 10) arduboy.setCursor(36, 32);
+        else arduboy.setCursor(34, 32);
         arduboy.print(F("Time:"));
         arduboy.print(second);
         arduboy.print(F("."));
         arduboy.print(millisecond);
     }
+
     if(second >= maxTime[maxTimeSelect])
     {
         arduboy.setCursor(40, 29);
