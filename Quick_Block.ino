@@ -17,8 +17,16 @@ int pointX, pointY;
 
 // Score and Time
 int score;
+int maxTime[4] = { 15, 30, 60, 120 };
+int maxTimeSelect;
+
+int maxScore[4] = { 5, 10, 15, 20 };
+int maxScoreSelect;
 
 int second, millisecond;
+
+// Menu Cursor
+int menuCursor;
 
 // Arduboy Height & Width
 const int screenWidth = Arduboy2::width() - 2;
@@ -69,6 +77,9 @@ void timerInt()
 
 void setup()
 {
+    maxScoreSelect = 0;
+    maxTimeSelect = 0;
+    menuCursor = 33;
 
     reset();
     arduboy.begin();
@@ -111,15 +122,38 @@ void updateMenu()
 {
     reset();
     if(arduboy.justPressed(A_BUTTON)) gameState = GameState::Game;
+
+    if(arduboy.justPressed(UP_BUTTON) && menuCursor == 33) menuCursor = 23;
+    if(arduboy.justPressed(DOWN_BUTTON) && menuCursor == 23) menuCursor = 33;
+
+    if(arduboy.justPressed(B_BUTTON) && menuCursor == 33)
+    {
+        maxScoreSelect += 1;
+        if(maxScoreSelect >= 4) maxScoreSelect = 0;
+    }
+    if(arduboy.justPressed(B_BUTTON) && menuCursor == 23)
+    {
+        maxTimeSelect += 1;
+        if(maxTimeSelect >= 4) maxTimeSelect = 0;
+    }
 }
 
 void drawMenu()
 {
-    arduboy.setCursor(31, 23);
+    arduboy.setCursor(31, 13);
     arduboy.print(F("QUICK BLOCK"));
 
-    arduboy.setCursor(28, 33);
-    arduboy.print(F("1 Minute Max"));
+    arduboy.setCursor(15, menuCursor);
+    arduboy.print(F("B>"));
+
+    arduboy.setCursor(31, 23);
+    arduboy.print(F("Time:"));
+    arduboy.print(maxTime[maxTimeSelect]);
+    arduboy.print(F("secs"));
+
+    arduboy.setCursor(42, 33);
+    arduboy.print(F("Score:"));
+    arduboy.print(maxScore[maxScoreSelect]);
 
     arduboy.setCursor(34, 43);
     arduboy.print(F("A to Start"));
@@ -130,13 +164,13 @@ void updateGame()
 {
     // Player Movement
     if(arduboy.pressed(RIGHT_BUTTON) && playerX < screenWidth) playerX += 1;
-    if(arduboy.pressed(LEFT_BUTTON) && playerX >= 10) playerX -= 1;
+    if(arduboy.pressed(LEFT_BUTTON) && playerX >= 2) playerX -= 1;
 
-    if(arduboy.pressed(UP_BUTTON) && playerY > 10) playerY -= 1;
-    if(arduboy.pressed(DOWN_BUTTON) && playerY < screenHeight) playerY += 1;
+    if(arduboy.pressed(UP_BUTTON) && playerY > 21) playerY -= 1;
+    if(arduboy.pressed(DOWN_BUTTON) && playerY < screenHeight - 1) playerY += 1;
 
     if(playerX >= screenWidth) playerX -= 1;
-    if(playerX <= 10) playerX += 1;
+    if(playerX <= 1) playerX += 1;
 
     // Point Position
 
@@ -151,7 +185,8 @@ void updateGame()
         }
     }
 
-    if(score >= 10) gameState = GameState::End;
+    if(second > maxTime[maxTimeSelect]) gameState = GameState::End;
+    if(score >= maxScore[maxScoreSelect]) gameState = GameState::End;
 }
 
 bool pointXNearPlayerX()
@@ -172,24 +207,26 @@ void drawGame()
     arduboy.print(F("."));
     arduboy.print(millisecond);
 
-    arduboy.setCursor(68, 0);
+    arduboy.setCursor(0, 10);
     arduboy.print(F("Score:"));
     arduboy.print(score);
-    arduboy.print(F("/10"));
+    arduboy.print(F("/"));
+    arduboy.print(maxScore[maxScoreSelect]);
 
     Sprites::drawSelfMasked(playerX, playerY, player, 0);
     Sprites::drawSelfMasked(pointX, pointY, point, 0);
+    Sprites::drawSelfMasked(0, 20, border, 0);
 }
 
 int randomisePointX()
 {
-    size_t indexX = random(10, screenWidth);
+    size_t indexX = random(20, screenWidth);
     return pointX = indexX;
 }
 
 int randomisePointY()
 {
-    size_t indexY = random(10, screenHeight);
+    size_t indexY = random(20, screenHeight);
     return pointY = indexY;
 }
 
@@ -202,7 +239,7 @@ void updateEnd()
 
 void drawEnd()
 {
-    if(second <= 59)
+    if(second <= maxTime[maxTimeSelect] - 1)
     {
         arduboy.setCursor(40, 22);
         arduboy.print(F("You Win!"));
@@ -213,9 +250,9 @@ void drawEnd()
         arduboy.print(F("."));
         arduboy.print(millisecond);
     }
-    if(second >= 60)
+    if(second >= maxTime[maxTimeSelect])
     {
         arduboy.setCursor(40, 29);
-        arduboy.print(F("You Lose"));
+        arduboy.print(F("You Lose!"));
     }
 }
