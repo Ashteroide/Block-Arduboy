@@ -66,7 +66,7 @@ void Timer()
         second += 1;
         millisecond = 0;
     }
-    if(second >= 60) gameState = GameState::End;
+    if(second >= maxTime[maxTimeSelect]) gameState = GameState::End;
 }
 
 // Timer Integer
@@ -77,6 +77,8 @@ void timerInt()
 
 void setup()
 {
+    Serial.begin(9600);
+
     maxScoreSelect = 0;
     maxTimeSelect = 0;
     menuCursor = 33;
@@ -143,7 +145,8 @@ void drawMenu()
     arduboy.setCursor(31, 13);
     arduboy.print(F("QUICK BLOCK"));
 
-    arduboy.setCursor(15, menuCursor);
+    if(menuCursor == 33) arduboy.setCursor(28, menuCursor);
+    else if(menuCursor == 23) arduboy.setCursor(18, menuCursor);
     arduboy.print(F("B>"));
 
     arduboy.setCursor(31, 23);
@@ -163,11 +166,11 @@ void drawMenu()
 void updateGame()
 {
     // Player Movement
-    if(arduboy.pressed(RIGHT_BUTTON) && playerX < screenWidth) playerX += 1;
+    if(arduboy.pressed(RIGHT_BUTTON) && playerX < screenWidth - 2) playerX += 1;
     if(arduboy.pressed(LEFT_BUTTON) && playerX >= 2) playerX -= 1;
 
-    if(arduboy.pressed(UP_BUTTON) && playerY > 21) playerY -= 1;
-    if(arduboy.pressed(DOWN_BUTTON) && playerY < screenHeight - 1) playerY += 1;
+    if(arduboy.pressed(UP_BUTTON) && playerY > 23) playerY -= 1;
+    if(arduboy.pressed(DOWN_BUTTON) && playerY < screenHeight - 2) playerY += 1;
 
     if(playerX >= screenWidth) playerX -= 1;
     if(playerX <= 1) playerX += 1;
@@ -220,13 +223,13 @@ void drawGame()
 
 int randomisePointX()
 {
-    size_t indexX = random(20, screenWidth);
+    size_t indexX = random(23, screenWidth - 2);
     return pointX = indexX;
 }
 
 int randomisePointY()
 {
-    size_t indexY = random(20, screenHeight);
+    size_t indexY = random(23, screenHeight - 2);
     return pointY = indexY;
 }
 
