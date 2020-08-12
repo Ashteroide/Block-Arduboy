@@ -6,7 +6,14 @@ The aim of the game is to tag all the blocks before the timer runs out, compete 
 
 
 # **What's New?**
-### 12/8/2020
+
+### 12/8/2020 (2)
+* Thanks for the help a certain someone
+* Interrupts are now removed and replaced by a better system
+* Clean ups here and there
+
+
+### 12/8/2020 (1)
 
 * Support for the emulator using `millis()` and interrupts makes it able for anyone to play now
 * Cleaned up some bits here and there
