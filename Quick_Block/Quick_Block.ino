@@ -3,7 +3,6 @@
 // Created 10, August, 2020
 
 #include <Arduboy2.h>
-#include <FlexiTimer2.h>
 
 #include "sprites.h"
 
@@ -23,7 +22,10 @@ int maxTimeSelect;
 int maxScore[4] = { 5, 10, 15, 20 };
 int maxScoreSelect;
 
-int second, millisecond;
+unsigned long previousTime = 0;
+
+int second, minute;
+float ms;
 
 // Menu Cursor
 int menuCursor;
@@ -31,6 +33,9 @@ int menuCursor;
 // Arduboy Height & Width
 const int screenWidth = Arduboy2::width() - 2;
 const int screenHeight = Arduboy2::height() - 2;
+
+// Reset Millis
+extern volatile unsigned long timer0_millis;
 
 enum class GameState
 {
@@ -51,36 +56,27 @@ void reset()
     playerY = (Arduboy2::height() / 2) - 1;
 
     score = 0;
-    millisecond = 0;
+
+    ms = 0;
     second = 0;
+    minute = 0;
 
-    FlexiTimer2::set(10, timerInt);
-    FlexiTimer2::start();
-}
+    previousTime = 0;
+    
+    noInterrupts ();
+    timer0_millis = 0;
+    interrupts ();
 
-// Timer
-void Timer()
-{
-    if(millisecond >= 100)
-    {
-        second += 1;
-        millisecond = 0;
-    }
-}
-
-// Timer Integer
-void timerInt()
-{
-    millisecond += 1;
+    menuCursor = 33;
 }
 
 void setup()
 {
+    reset();
+    
     maxScoreSelect = 0;
     maxTimeSelect = 0;
-    menuCursor = 33;
 
-    reset();
     arduboy.begin();
     arduboy.clear();
 }
@@ -88,8 +84,7 @@ void setup()
 void loop()
 {
     arduboy.initRandomSeed();
-
-    Timer();
+    
     if(!arduboy.nextFrame()) return;
 
     arduboy.pollButtons();
@@ -162,6 +157,9 @@ void drawMenu()
 // Gameplay
 void updateGame()
 {
+    unsigned long currentTime = millis();
+    ms = currentTime;
+
     // Player Movement
     if(arduboy.pressed(RIGHT_BUTTON) && playerX < screenWidth - 2) playerX += 1;
     if(arduboy.pressed(LEFT_BUTTON) && playerX >= 2) playerX -= 1;
@@ -187,7 +185,9 @@ void updateGame()
 
     if(score >= maxScore[maxScoreSelect]) gameState = GameState::gameOver;
 
-    if(second >= maxTime[maxTimeSelect]) gameState = GameState::gameOver;
+    if((ms / 1000) >= maxTime[maxTimeSelect]) gameState = GameState::gameOver;
+
+    previousTime = currentTime;
 }
 
 bool pointXNearPlayerX()
@@ -204,9 +204,7 @@ void drawGame()
 {
     arduboy.setCursor(0, 0);
     arduboy.print(F("Time:"));
-    arduboy.print(second);
-    arduboy.print(F("."));
-    arduboy.print(millisecond);
+    arduboy.print(ms / 1000);
 
     arduboy.setCursor(0, 10);
     arduboy.print(F("Score:"));
@@ -235,12 +233,11 @@ int randomisePointY()
 void updateGameOver()
 {
     if(arduboy.justPressed(A_BUTTON)) gameState = GameState::Menu;
-    FlexiTimer2::stop();
 }
 
 void drawGameOver()
 {
-    if(second <= maxTime[maxTimeSelect] - 1)
+    if((ms / 1000) <= maxTime[maxTimeSelect] - 1)
     {
         arduboy.setCursor(40, 22);
         arduboy.print(F("You Win!"));
@@ -248,12 +245,10 @@ void drawGameOver()
         if(second < 10) arduboy.setCursor(36, 32);
         else arduboy.setCursor(34, 32);
         arduboy.print(F("Time:"));
-        arduboy.print(second);
-        arduboy.print(F("."));
-        arduboy.print(millisecond);
+        arduboy.print(ms / 1000);
     }
 
-    if(second >= maxTime[maxTimeSelect])
+    if((ms / 1000) >= maxTime[maxTimeSelect])
     {
         arduboy.setCursor(40, 29);
         arduboy.print(F("You Lose!"));
